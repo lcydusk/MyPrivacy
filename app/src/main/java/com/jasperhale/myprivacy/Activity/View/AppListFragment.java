@@ -2,8 +2,6 @@ package com.jasperhale.myprivacy.Activity.View;
 
 import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
-import android.databinding.ObservableArrayList;
-import android.databinding.ObservableList;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,21 +9,18 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.jasperhale.myprivacy.Activity.Base.LogUtil;
+import com.jasperhale.myprivacy.Activity.ViewModel.FragmentViewModel;
 import com.jasperhale.myprivacy.Activity.ViewModel.MainViewModel;
-import com.jasperhale.myprivacy.Activity.item.ApplistItem;
 import com.jasperhale.myprivacy.R;
-
-
 
 
 public class AppListFragment extends Fragment {
 
     private String Tag = "AppListFragment";
+    public FragmentViewModel fragmentViewModel;
     private com.jasperhale.myprivacy.AppListFragment binding;
     private int position;
     private MainViewModel mainViewModel;
-
-    private ObservableList<ApplistItem> items;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -36,25 +31,23 @@ public class AppListFragment extends Fragment {
 
         mainViewModel = ViewModelProviders.of(getActivity()).get(MainViewModel.class);
 
-        items = new ObservableArrayList<>();
-
         switch (position) {
             case 0: {
-                this.getLifecycle().addObserver(mainViewModel.items_user);
+                fragmentViewModel = mainViewModel.items_user;
                 break;
             }
             case 1: {
-                this.getLifecycle().addObserver(mainViewModel.items_system);
+                fragmentViewModel = mainViewModel.items_system;
                 break;
             }
             case 2: {
-                this.getLifecycle().addObserver(mainViewModel.items_limit);
+                fragmentViewModel = mainViewModel.items_limit;
                 break;
             }
             default:
                 break;
         }
-
+        this.getLifecycle().addObserver(fragmentViewModel);
         super.onCreate(savedInstanceState);
     }
 
@@ -66,22 +59,7 @@ public class AppListFragment extends Fragment {
         binding = DataBindingUtil.inflate(inflater,
                 R.layout.fragment_app_list, container, false);
 
-        switch (position) {
-            case 0: {
-                binding.setFragmentViewModel(mainViewModel.items_user);
-                break;
-            }
-            case 1: {
-                binding.setFragmentViewModel(mainViewModel.items_system);
-                break;
-            }
-            case 2: {
-                binding.setFragmentViewModel(mainViewModel.items_limit);
-                break;
-            }
-            default:
-                break;
-        }
+        binding.setFragmentViewModel(fragmentViewModel);
 
         initSwipeRefresh();
 
@@ -121,11 +99,8 @@ public class AppListFragment extends Fragment {
 
     private void initSwipeRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener(() -> {
-            LogUtil.d(Tag,"Refresh");
-            //mainViewModel.items_user.set();
-            //mainViewModel.mainRepository.items_userObservable.subscribe(mainViewModel.items_user.setObserver);
-            mainViewModel.items_user.items.remove(0);
-            //mainViewModel.items_user.items = items;
+            LogUtil.d(Tag, "Refresh");
+            fragmentViewModel.RefreshList();
             binding.swipeRefreshLayout.setRefreshing(false);
         });
     }

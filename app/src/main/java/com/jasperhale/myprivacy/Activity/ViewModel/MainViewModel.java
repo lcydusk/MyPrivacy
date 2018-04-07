@@ -19,9 +19,9 @@ public class MainViewModel extends android.arch.lifecycle.ViewModel implements L
 
     public MainViewModel() {
         mainRepository = new MainRepository();
-        this.items_user = new FragmentViewModel(mainRepository);
-        this.items_system = new FragmentViewModel(mainRepository);
-        this.items_limit = new FragmentViewModel(mainRepository);
+        this.items_user = new FragmentViewModel(mainRepository.items_userObservable);
+        this.items_system = new FragmentViewModel(mainRepository.items_systemObservable);
+        this.items_limit = new FragmentViewModel(mainRepository.items_limitObservable);
     }
 
 
@@ -29,9 +29,9 @@ public class MainViewModel extends android.arch.lifecycle.ViewModel implements L
     @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
     void creat() {
         LogUtil.d(TAG, "caeat");
-         mainRepository.items_userObservable.subscribe(items_user.behaviorSubject);
-         mainRepository.items_systemObservable.subscribe(items_system.behaviorSubject);
-         mainRepository.items_limitObservable.subscribe(items_limit.behaviorSubject);
+        mainRepository.items_userObservable.subscribe(items_user.behaviorSubject);
+        mainRepository.items_systemObservable.subscribe(items_system.behaviorSubject);
+        mainRepository.items_limitObservable.subscribe(items_limit.behaviorSubject);
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
@@ -57,26 +57,24 @@ public class MainViewModel extends android.arch.lifecycle.ViewModel implements L
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     void destory() {
         LogUtil.d(TAG, "destory");
-        mainRepository.items_userObservable.subscribe(items_user.behaviorSubject);
-        mainRepository.items_systemObservable.subscribe(items_system.behaviorSubject);
-        mainRepository.items_limitObservable.subscribe(items_limit.behaviorSubject);
     }
 
-    public void SearchRecyclerview(String query,int position){
-        switch (position){
-            case 0:{
-                LogUtil.d(TAG,"SearchRecyclerview"+position);
+    public void SearchRecyclerview(String query, int position) {
+        switch (position) {
+            case 0: {
+                LogUtil.d(TAG, "SearchRecyclerview" + position);
                 break;
             }
-            case 1:{
-                LogUtil.d(TAG,"SearchRecyclerview"+position);
+            case 1: {
+                LogUtil.d(TAG, "SearchRecyclerview" + position);
                 break;
             }
-            case 2:{
-                //LogUtil.d(TAG,"SearchRecyclerview"+position);
+            case 2: {
+                LogUtil.d(TAG, "SearchRecyclerview" + position);
                 break;
             }
-            default: break;
+            default:
+                break;
         }
     }
 }

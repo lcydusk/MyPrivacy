@@ -4,15 +4,16 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.databinding.BaseObservable;
-import android.databinding.Bindable;
 import android.databinding.ObservableArrayList;
 import android.databinding.ObservableList;
 
 
 import com.jasperhale.myprivacy.Activity.Base.LogUtil;
-import com.jasperhale.myprivacy.Activity.Repository.MainRepository;
 import com.jasperhale.myprivacy.Activity.item.ApplistItem;
 
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
@@ -22,59 +23,45 @@ import io.reactivex.subjects.BehaviorSubject;
  */
 
 public class FragmentViewModel extends BaseObservable implements LifecycleObserver {
-
-    private MainRepository mainRepository;
     //@Bindable
+    private Observable<ObservableList> Observable;
     public ObservableList<ApplistItem> items;
     private final String TAG = "FragmentViewModel";
     //订阅缓存
-    public BehaviorSubject<ObservableList> behaviorSubject ;
+    public BehaviorSubject<ObservableList> behaviorSubject;
     public Observer<ObservableList> setObserver;
 
-    public FragmentViewModel(MainRepository mainRepository) {
-        this.mainRepository = mainRepository;
+    public FragmentViewModel(Observable<ObservableList> Observable) {
+        this.Observable = Observable;
         items = new ObservableArrayList<>();
         behaviorSubject = BehaviorSubject.create();
 
         setObserver = new Observer<ObservableList>() {
             @Override
             public void onSubscribe(Disposable d) {
-
             }
-
             @Override
             public void onNext(ObservableList observableList) {
-                LogUtil.d(TAG,"setObserver"+observableList.toString());
-                items.clear();
-                items.addAll(observableList);
+                LogUtil.d(TAG, "setObserver" + observableList.toString());
+                //items.clear();
+                setItems(observableList);
             }
-
             @Override
             public void onError(Throwable e) {
-
             }
-
             @Override
             public void onComplete() {
-
             }
         };
-    }
-
-    public void set(){
-        //订阅结果
-        behaviorSubject.subscribe(items -> {
-            LogUtil.d(TAG,"reitems"+"setItems(items)");
-            setItems(items);
-        });
+        behaviorSubject.subscribe(setObserver);
     }
 
 
     public void setItems(ObservableList<ApplistItem> items) {
         LogUtil.d(TAG, "setItems");
-        if (this.items.size() == 0){
+        if (this.items.size() == 0) {
             this.items.addAll(items);
-        }else {
+        } else {
             this.items.clear();
             this.items.addAll(items);
         }
@@ -83,6 +70,13 @@ public class FragmentViewModel extends BaseObservable implements LifecycleObserv
     public ObservableList<ApplistItem> getItems() {
         LogUtil.d(TAG, "getItems");
         return items;
+    }
+    public void RefreshList(){
+        Observable
+                .throttleFirst(5, TimeUnit.SECONDS)
+                .subscribe(behaviorSubject);
+        LogUtil.d(TAG, "setItems");
+        behaviorSubject.subscribe(setObserver);
     }
 
 
@@ -94,7 +88,7 @@ public class FragmentViewModel extends BaseObservable implements LifecycleObserv
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     void start() {
         LogUtil.d(TAG, getClass().getSimpleName() + "start");
-        behaviorSubject.subscribe(setObserver);
+        //Observable.subscribe(behaviorSubject);
         //this.setItems(mainRepository.getItems_user());
     }
 
@@ -118,6 +112,5 @@ public class FragmentViewModel extends BaseObservable implements LifecycleObserv
         LogUtil.d(TAG, getClass().getSimpleName() + "destory");
         behaviorSubject.onComplete();
     }
-
 
 }

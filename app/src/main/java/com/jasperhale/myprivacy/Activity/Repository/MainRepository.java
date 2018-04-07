@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -53,10 +54,6 @@ public class MainRepository {
         return items_user;
     }
 
-    public void Items_user_Obtain() {
-        items_user = getitems(0);
-    }
-
 
     public ObservableList<ApplistItem> getItems_user(String query) {
         return searchitems(query, items_user);
@@ -66,9 +63,6 @@ public class MainRepository {
         return items_system;
     }
 
-    public void Items_system_Obtain() {
-        items_system = getitems(1);
-    }
 
     public ObservableList<ApplistItem> getItems_system(String query) {
         return searchitems(query, items_system);
@@ -78,77 +72,23 @@ public class MainRepository {
         return items_limit;
     }
 
-    public void Items_limit_Obtain() {
-        items_limit = getitems(2);
-    }
 
     public ObservableList<ApplistItem> getItems_limit(String query) {
         return searchitems(query, items_limit);
     }
 
-    private ObservableList<ApplistItem> getitems(int position) {
-        ObservableList<ApplistItem> Appitems = new ObservableArrayList<>();
-        Observable
-                .create((ObservableOnSubscribe<List<PackageInfo>>) emitter -> emitter.onNext(model.getPackages()))
-                //等待
-                .subscribeOn(Schedulers.trampoline())
+    private Observable<ObservableList> init_Observable(int position) {
+
+        Observable<ObservableList> applistObservable = Observable.create(new ObservableOnSubscribe<List<PackageInfo>>() {
+            @Override
+            public void subscribe(ObservableEmitter<List<PackageInfo>> emitter) throws Exception {
+                emitter.onNext(model.getPackages());
+                emitter.onComplete();
+            }
+        }).subscribeOn(Schedulers.trampoline())
                 //cpu密集
                 .observeOn(Schedulers.computation())
-                //筛选系统应用
-                .map(packages -> {
-                    List<PackageInfo> items = new ArrayList<>();
-                    switch (position) {
-                        case 0: {
-                            for (PackageInfo packageInfo : packages) {
-                                if (!model.isSystemApp(packageInfo)) {
-                                    items.add(packageInfo);
-                                }
-                            }
-                            break;
-                        }
-                        case 1: {
-                            for (PackageInfo packageInfo : packages) {
-                                if (model.isSystemApp(packageInfo)) {
-                                    items.add(packageInfo);
-                                }
-                            }
-                            break;
-                        }
-                        case 2: {
-                            for (PackageInfo packageInfo : packages) {
-                                if (model.isLimited(packageInfo)) {
-                                    items.add(packageInfo);
-                                }
-                            }
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    return items;
-                })
-                //创建Appitems
-                .map(packages -> {
-                    for (PackageInfo pac : packages) {
-                        Appitems.add(model.creatApplistItem(pac));
-                    }
-                    return Appitems;
-                })
-                .subscribe(items -> {
-                    Collections.sort(Appitems);
-                });
-        return Appitems;
-    }
-
-    private  Observable<ObservableList> init_Observable(int position) {
-
-        Observable<ObservableList> applistObservable = Observable
-                .create((ObservableOnSubscribe<List<PackageInfo>>) emitter -> emitter.onNext(model.getPackages()))
-                //等待
-                .subscribeOn(Schedulers.trampoline())
-                //cpu密集
-                .observeOn(Schedulers.computation())
-                //筛选系统应用
+                //筛选应用
                 .map(packages -> {
                     List<PackageInfo> items = new ArrayList<>();
                     switch (position) {
@@ -191,7 +131,7 @@ public class MainRepository {
                 })
                 .map(items -> {
                     Collections.sort(items);
-                    LogUtil.d(TAG, "setObserver"+"reitems" + String.valueOf(position));
+                    LogUtil.d(TAG, "setObserver" + "reitems" + String.valueOf(position));
                     return items;
                 });
         LogUtil.d(TAG, "reitems" + String.valueOf(position));
